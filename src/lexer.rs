@@ -2,9 +2,9 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 
 #[derive(Debug)]
-enum TokenType {
+pub enum TokenType {
     Identifier,
-    Number(i64),
+    Number(i32),
     Int,
     Void,
     Return,
@@ -18,8 +18,8 @@ enum TokenType {
 
 #[derive(Debug)]
 pub struct Token {
-    token_type: TokenType,
-    lexeme: Box<str>,
+    pub token_type: TokenType,
+    pub lexeme: Box<str>,
 }
 
 impl Token {
@@ -159,7 +159,7 @@ impl Lexer {
             if ch.is_numeric() {
                 lexeme.push(ch);
             } else {
-                self.tokens.push(Token::from_boxed_str(TokenType::Number(lexeme.parse::<i64>().unwrap()), lexeme.clone().into_boxed_str()));
+                self.tokens.push(Token::from_boxed_str(TokenType::Number(lexeme.parse::<i32>().unwrap()), lexeme.clone().into_boxed_str()));
                 lexeme.clear();
                 self.state = LexerState::Other;
                 consumed_bytes = byte;
@@ -178,7 +178,7 @@ impl Lexer {
                 self.tokens.push(Token::from_boxed_str(token_type, lexeme.clone().into_boxed_str()));
                 lexeme.clear();
             }
-            LexerState::Number => self.tokens.push(Token::from_boxed_str(TokenType::Number(lexeme.parse::<i64>().unwrap()), lexeme.clone().into_boxed_str())),
+            LexerState::Number => self.tokens.push(Token::from_boxed_str(TokenType::Number(lexeme.parse::<i32>().unwrap()), lexeme.clone().into_boxed_str())),
             LexerState::Other => ()
         }
     }
