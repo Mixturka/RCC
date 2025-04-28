@@ -1,4 +1,4 @@
-use rcc::{lexer::Lexer, parser::Parser};
+use rcc::{code_gen::asm_ast::AsmProgram, lexer::Lexer, parser::Parser};
 
 fn main() {
    let mut lexer: Lexer = Default::default();
@@ -13,4 +13,7 @@ fn main() {
    let ast = parser.parse(tokens).unwrap();
 
    println!("{}", ast);
+
+   let asm_ast: AsmProgram = ast.into();
+   println!("{}", asm_ast);
 }

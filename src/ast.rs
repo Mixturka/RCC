@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{code_gen, utils};
+use crate::utils;
 
 type Identifier = String;
 
@@ -31,7 +31,7 @@ impl Program {
                 func.to_string(indent + 1, f)?;
             }
         }
-        writeln!(f, "}}")
+        write!(f, "}}")
     }
 }
 
@@ -109,13 +109,5 @@ impl Expression {
 impl fmt::Display for Expression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.to_string(0, f)
-    }
-}
-
-impl TryFrom<code_gen::asm_ast::AsmProgram> for Program {
-    type Error = code_gen::CodegenError;
-
-    fn try_from(value: code_gen::asm_ast::AsmProgram) -> Result<Self, Self::Error> {
-        
     }
 }
