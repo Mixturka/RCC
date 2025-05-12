@@ -1,8 +1,8 @@
-use std::{fmt::{write, Error}, fs::File, io::{BufWriter, Write}};
+use std::{fs::File, io::{BufWriter, Write}};
 
-use super::CodeEmitter;
+use super::{CodeEmitter, EmitResult};
 
-use crate::code_gen::asm_ast::{self, AsmFunctionDefinition, AsmProgram, Instruction, Operand};
+use crate::code_gen::asm_ast::{AsmFunctionDefinition, AsmProgram, Instruction, Operand};
 
 pub struct Amd64CodeEmitter {
     file_writer: BufWriter<File>
@@ -17,53 +17,59 @@ impl Amd64CodeEmitter {
 }
 
 impl CodeEmitter for Amd64CodeEmitter {
-    fn emit_program(&mut self, prog: &AsmProgram) {
+    fn emit_program(&mut self, prog: &AsmProgram) -> EmitResult {
         match prog {
-            AsmProgram::Program(func) => self.emit_function(func),
+            AsmProgram::Program(func) => self.emit_function(func)?,
         }
 
         #[cfg(target_os = "linux")]
         {
-            self.file_writer.write(br#"  .section .note.GNU-stack,"",@progbits"#);
-            self.file_writer.write(b"\n");
+            self.file_writer.write(br#"  .section .note.GNU-stack,"",@progbits"#)?;
+            self.file_writer.write(b"\n")?;
         }
+
+        Ok(())
     }
 
-    fn emit_function(&mut self, func: &AsmFunctionDefinition) {
+    fn emit_function(&mut self, func: &AsmFunctionDefinition) -> EmitResult {
         match func {
             AsmFunctionDefinition::Function { name, instructions } => {
-                write!(self.file_writer, "  .globl {}\n", name);
-                write!(self.file_writer, "{}:\n", name);
-                self.emit_instructions(instructions);
+                write!(self.file_writer, "  .globl {}\n", name)?;
+                write!(self.file_writer, "{}:\n", name)?;
+                self.emit_instructions(instructions)?;
             }
         }
+        Ok(())
     }
 
-    fn emit_instructions(&mut self, instructions: &[Instruction]) {
-        instructions.iter().for_each(|instruction| {
+    fn emit_instructions(&mut self, instructions: &[Instruction]) -> EmitResult {
+         for instruction in instructions {
             match instruction {
                 Instruction::Mov { src, dst } => {
-                    self.file_writer.write(b"  movl ");
-                    self.emit_operand(src);
-                    self.file_writer.write(b", ");
-                    self.emit_operand(dst);
-                    write!(self.file_writer, "\n");
+                    self.file_writer.write(b"  movl ")?;
+                    self.emit_operand(&src)?;
+                    self.file_writer.write(b", ")?;
+                    self.emit_operand(&dst)?;
+                    self.file_writer.write(b"\n")?;
                 },
                 Instruction::Ret => {
-                    self.file_writer.write(b"  ret\n");
+                    self.file_writer.write(b"  ret\n")?;
                 }
             }
-        });
+        }
+
+        Ok(())
     }
 
-    fn emit_operand(&mut self, operand: &Operand) {
+    fn emit_operand(&mut self, operand: &Operand) -> EmitResult {
         match operand {
             Operand::Imm(val) => {
-                write!(self.file_writer, "${}", val);
+                write!(self.file_writer, "${}", val)?;
             }
             Operand::Register(reg) => {
-                write!(self.file_writer, "%{}", reg);
+                write!(self.file_writer, "%{}", reg)?;
             }
         }
+        Ok(())
     }
 }
